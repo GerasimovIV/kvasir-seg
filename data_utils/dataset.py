@@ -103,7 +103,9 @@ class KvasirDatasetBase(Dataset):
         self.augmentator = Augmentator(augment_conf)
         self.to_tensor = ToTensor()
 
-    def __getitem__(self, idx) -> Dict["str", Union[torch.Tensor, List[torch.Tensor]]]:
+    def __getitem__(
+        self, idx: int, return_bboxes: bool = True
+    ) -> Dict["str", Union[torch.Tensor, List[torch.Tensor]]]:
         input_tensor = self.data_images[self.data_names[idx]].get("pil_image_raw")
         target_mask_tensor = self.data_images[self.data_names[idx]].get(
             "pil_image_mask"
@@ -126,7 +128,7 @@ class KvasirDatasetBase(Dataset):
 
         result = {"input": input_tensor, "target": target_mask_tensor}
 
-        if "bboxes" in self.data_images[self.data_names[idx]]:
+        if "bboxes" in self.data_images[self.data_names[idx]] and return_bboxes:
             curr_bboxes = self.data_images[self.data_names[idx]].get("bboxes")
             height_orig = curr_bboxes["height"]
             weight_orig = curr_bboxes["width"]
@@ -150,3 +152,9 @@ class KvasirDatasetBase(Dataset):
 
     def __len__(self) -> int:
         raise len(self.data_images)
+
+
+class KvasirDataset(KvasirDatasetBase):
+    def __getitem__(self, idx) -> Dict["str", Union[torch.Tensor, List[torch.Tensor]]]:
+        result = super().__getitem__(idx, return_bboxes=False)
+        return result
