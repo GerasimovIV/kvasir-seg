@@ -1,0 +1,27 @@
+GaussianBlur:
+  blur_limit:
+  - 3
+  - 7
+  p: 0.5
+  sigma_limit:
+  - 0.0
+  - 0.5
+HorizontalFlip:
+  p: 0.5
+Resize:
+  height: 400
+  interpolation: 1
+  p: 1.0
+  width: 400
+Rotate:
+  border_mode: 4
+  crop_border: false
+  interpolation: 1
+  limit:
+  - -90
+  - 90
+  mask_value: null
+  p: 0.5
+  rotate_method: largest_box
+VerticalFlip:
+  p: 0.5
