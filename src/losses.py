@@ -50,7 +50,7 @@ class LossCompose(nn.Module):
         loss_sum = torch.tensor(0.0, requires_grad=True, device=device)
 
         for w, loss_f in zip(self.weights, self.losses):
-            loss_sum += w * loss_f(input, target)
+            loss_sum = loss_sum + w * loss_f(input, target)
 
         return loss_sum
 

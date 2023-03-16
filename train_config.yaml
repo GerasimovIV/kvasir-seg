@@ -19,6 +19,7 @@ optimizer:
 
 model:
   name: SegformerForSemanticSegmentation
+  downsample_target: false
   load_args:
     pre_trained_name: nvidia/mit-b5
 

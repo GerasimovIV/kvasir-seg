@@ -1,7 +1,8 @@
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Sequence, Union
+from typing import Any, Dict, List, Optional, Sequence, Tuple, Union
 
 import torch.nn as nn
+import torch.nn.functional as F
 import yaml
 from torch import Tensor
 from transformers import SegformerConfig, SegformerForSemanticSegmentation
@@ -9,13 +10,50 @@ from transformers import SegformerConfig, SegformerForSemanticSegmentation
 from .losses import load_loss
 
 
+class UpDownSampler(object):
+    def __init__(self, resource: Union[Path, str, Dict[str, Any]]):
+        config = resource
+        if isinstance(resource, Path) or isinstance(resource, str):
+            resource = Path(resource)
+
+            with open(resource, "r") as file:
+                config = yaml.safe_load(file)
+
+        assert "model" in config, f"wrong resource {resource} construction"
+
+        self.downsample_target = config["model"]["downsample_target"]
+
+    def __call__(self, input: Tensor, target: Tensor) -> Tuple[Tensor]:
+        if self.downsample_target:
+            size = input.shape[-2:]
+            target = target.unsqueeze(1).float()
+            target = F.interpolate(target, size=size, mode="nearest").squeeze(1).long()
+        else:
+            size = target.shape[-2:]
+            input = F.interpolate(input, size=size, mode="nearest")
+
+        return input, target
+
+
 class WrappedSegformerForSemanticSegmentation(SegformerForSemanticSegmentation):
-    def __init__(self, config, loss: nn.Module):
-        super().__init__(config)
+    def add_loss_function(self, loss: nn.Module) -> None:
         self.loss = loss
 
-    def forward(self, input: Tensor, target: Tensor):
-        logits = self.predict(input)
+    def set_up_type_upsample(self, resource: Union[Path, str, Dict[str, Any]]):
+        """
+        if downsample_target == True,
+        then target will be downsamplet to size of model
+        and loss will be computed with smallest tensors
+        and vise wersa
+        """
+        self.sampler = UpDownSampler(resource)
+
+    def forward(self, input: Tensor, target: Tensor) -> Dict[str, Tensor]:
+        logits = self.predict(input).logits
+        logits, target = self.sampler(input=logits, target=target)
+        assert (
+            logits.shape[-2:] == target.shape[-2:]
+        ), "Something wrong in UpDownSampler"
         loss_result = self.loss(input=logits, target=target)
         return dict(logits=logits, loss=loss_result)
 
@@ -47,8 +85,14 @@ def loadSegformerForSemanticSegmentation(
     }
     # config = SegformerConfig(**seg_former_config_args)
     loss = load_loss(resource)
-    model = WrappedSegformerForSemanticSegmentation(config, loss)
-    model.segformer = model.segformer.from_pretrained(pre_trained_name)
+    # model = WrappedSegformerForSemanticSegmentation(config, loss)
+    model = WrappedSegformerForSemanticSegmentation.from_pretrained(pre_trained_name)
+    model.add_loss_function(loss)
+    config = model.config
+    model.decode_head.classifier = nn.Conv2d(
+        config.decoder_hidden_size, 2, kernel_size=1
+    )
+    model.set_up_type_upsample(resource)
     return model
 
 
