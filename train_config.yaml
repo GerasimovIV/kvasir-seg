@@ -21,7 +21,7 @@ model:
   name: SegformerForSemanticSegmentation
   downsample_target: false
   load_args:
-    pre_trained_name: nvidia/mit-b5
+    pre_trained_name: nvidia/mit-b0
 
 data_config:
   path_to_dataset: ./dataset/Kvasir-SEG/

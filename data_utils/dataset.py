@@ -126,6 +126,7 @@ class KvasirDatasetBase(Dataset):
         input_tensor = self.to_tensor(input_tensor)
         target_mask_tensor = self.to_tensor(target_mask_tensor)[0, :, :]
         target_mask_tensor = target_mask_tensor == 1.0
+        target_mask_tensor = target_mask_tensor.long()
 
         result = {"input": input_tensor, "target": target_mask_tensor}
 
