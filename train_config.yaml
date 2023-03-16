@@ -1,0 +1,18 @@
+loss_config:
+  losses:
+    - CrossEntropy:
+        weight:
+          - 0.5
+          - 0.5
+        reduction: mean
+    - DiceLoss:
+  weights:
+    - 0.5
+    - 0.5
+  optimizer:
+    name: Adam
+    params:
+      lr: 0.0001
+      betas:
+        - 0.9
+        - 0.999
