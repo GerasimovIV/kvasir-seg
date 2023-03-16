@@ -1,13 +1,14 @@
 import json
 from glob import glob
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional, Sequence, Union
 
 import numpy as np
 import torch
+import yaml
 from PIL import Image
 from termcolor import colored
-from torch.utils.data import Dataset
+from torch.utils.data import Dataset, random_split
 from torchvision.transforms import ToTensor
 from tqdm import tqdm
 
@@ -158,3 +159,34 @@ class KvasirDataset(KvasirDatasetBase):
     def __getitem__(self, idx) -> Dict["str", Union[torch.Tensor, List[torch.Tensor]]]:
         result = super().__getitem__(idx, return_bboxes=False)
         return result
+
+
+def load_datasets(
+    resource: Union[Path, str, Dict[str, Any]]
+) -> Sequence[KvasirDataset]:
+    """
+    loss loader from configureation, suppose that resource
+    contains field 'loss_config'
+    """
+
+    config = resource
+
+    if isinstance(resource, Path) or isinstance(resource, str):
+        resource = Path(resource)
+
+        with open(resource, "r") as file:
+            config = yaml.safe_load(file)
+
+        assert "data_config" in config, f"wrong resource {resource} construction"
+
+    path_to_dataset = config["data_config"]["path_to_dataset"]
+    augment_config_path = config["data_config"]["augment_config"]
+    seed = config["data_config"]["train_test_split"]["seed"]
+    lens = config["data_config"]["train_test_split"]["lens"]
+
+    dataset = KvasirDataset(root_dir=path_to_dataset, augment_conf=augment_config_path)
+
+    split_generator = torch.Generator().manual_seed(seed)
+    dataset_train, dataset_test = random_split(dataset, lens, generator=split_generator)
+
+    return dataset_train, dataset_test

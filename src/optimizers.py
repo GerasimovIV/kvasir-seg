@@ -1,4 +1,5 @@
-from pathlib import Any, Dict, Path, Union
+from pathlib import Path
+from typing import Any, Dict, Union
 
 import torch.nn as nn
 import torch.optim as optim
@@ -9,11 +10,12 @@ optimizers = {"SGD": optim.SGD, "Adam": optim.Adam}
 
 def load_optimizer(
     resource: Union[Path, str, Dict[str, Any]], model: nn.Module
-) -> optim.optimizer.Optimizer:
+) -> optim.Optimizer:
     """
     loss loader from configureation, suppose that resource
     contains field 'loss_config'
     """
+    config = resource
 
     if isinstance(resource, Path) or isinstance(resource, str):
         resource = Path(resource)

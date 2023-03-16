@@ -112,31 +112,47 @@ class Augmentator(object):
     ) -> None:
 
         self.transforms = []
-        print(blue_bold("[Augmentator]:"), "initialization")
+        # print(blue_bold("[Augmentator]:"), "initialization")
         if isinstance(transforms_config, str) or isinstance(transforms_config, Path):
             transforms_config = Path(transforms_config)
             with open(f"{transforms_config}") as file:
                 transforms_config = yaml.safe_load(file)
 
-        for name, params in transforms_config.items():
+        self.transforms_always = []
+        for name, params in transforms_config["always"].items():
             if name in augmentation_funcs:
-                print("\t" + blue_bold(name))
-                for k, v in params.items():
-                    print(f"\t\t{k}: {v}")
-                self.transforms.append(augmentation_funcs[name](**params))
+                # print("\t" + blue_bold(name))
+                # for k, v in params.items():
+                #     print(f"\t\t{k}: {v}")
+                self.transforms_always.append(augmentation_funcs[name](**params))
 
             else:
                 print(
                     red_bold("Warning!"), f"the augmentation with {name} was not found"
                 )
 
-        self.len_transforms = len(self.transforms)
+        self.transforms_pick_randomly = []
+        for name, params in transforms_config["pick_randomly"].items():
+            if name in augmentation_funcs:
+                # print("\t" + blue_bold(name))
+                # for k, v in params.items():
+                #     print(f"\t\t{k}: {v}")
+                self.transforms_pick_randomly.append(augmentation_funcs[name](**params))
+
+            else:
+                print(
+                    red_bold("Warning!"), f"the augmentation with {name} was not found"
+                )
+
+        self.len_transforms = len(self.transforms_pick_randomly)
 
     def __call__(self) -> torch.nn.modules.module.Module:
         if self.len_transforms == 0:
             return A.Compose([])
 
         k = np.random.randint(low=1, high=self.len_transforms + 1)
-        list_seq = np.random.choice(self.transforms, size=k, replace=False)
-        seq = A.Compose(list_seq)
+        list_seq = np.random.choice(
+            self.transforms_pick_randomly, size=k, replace=False
+        ).tolist()
+        seq = A.Compose(self.transforms_always + list_seq)
         return seq

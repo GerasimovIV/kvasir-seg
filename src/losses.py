@@ -37,6 +37,7 @@ class LossCompose(nn.Module):
     def __init__(
         self, losses: Sequence[nn.Module], weights: Optional[Sequence[float]] = None
     ):
+        super().__init__()
         if weights is None:
             weights = [1.0 for i in range(len(losses))]
 
@@ -59,7 +60,7 @@ def load_loss(resource: Union[Path, str, Dict[str, Any]]) -> LossCompose:
     loss loader from configureation, suppose that resource
     contains field 'loss_config'
     """
-
+    config = resource
     if isinstance(resource, Path) or isinstance(resource, str):
         resource = Path(resource)
 
