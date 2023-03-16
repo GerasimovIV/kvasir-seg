@@ -151,7 +151,7 @@ class KvasirDatasetBase(Dataset):
         return result
 
     def __len__(self) -> int:
-        raise len(self.data_images)
+        return len(self.data_images)
 
 
 class KvasirDataset(KvasirDatasetBase):
