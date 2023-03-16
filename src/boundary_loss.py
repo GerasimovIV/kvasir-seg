@@ -5,7 +5,7 @@ import torch.nn.functional as F
 
 def one_hot(label, n_classes, requires_grad=True):
     """Return One Hot Label"""
-    divce = label.device
+    device = label.device
     one_hot_label = torch.eye(n_classes, device=device, requires_grad=requires_grad)[
         label
     ]
