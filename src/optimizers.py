@@ -21,7 +21,7 @@ def load_optimizer(
         with open(resource, "r") as file:
             config = yaml.safe_load(file)
 
-        assert "loss_config" in config, f"wrong resource {resource} construction"
+        assert "optimizer" in config, f"wrong resource {resource} construction"
 
     name = config["optimizer"]["name"]
     params = config["optimizer"]["params"]
