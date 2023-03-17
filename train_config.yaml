@@ -19,10 +19,10 @@ optimizer:
       - 0.999
 
 model:
-  name: SegformerForSemanticSegmentation
+  name: UnetPlusPlus
   downsample_target: false
   load_args:
-    pre_trained_name: nvidia/mit-b0
+    pre_trained_name: imagenet
 
 data_config:
   path_to_dataset: ./dataset/Kvasir-SEG/
