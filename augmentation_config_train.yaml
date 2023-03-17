@@ -8,7 +8,7 @@ pick_randomly:
   GaussianBlur:
     blur_limit:
     - 3
-    - 7
+    - 15
     p: 0.5
     sigma_limit:
     - 0.0

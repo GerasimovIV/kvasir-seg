@@ -36,17 +36,17 @@ data_config:
     test: ./augmentation_config_test.yaml
 
 trainer_args:
-  output_dir: expirements/exp1
+  output_dir: expirements/unet_plus_plus_baseline
   overwrite_output_dir: true
   evaluation_strategy: steps
-  eval_steps: 1
+  eval_steps: 10
   learning_rate: 0.0001
   lr_scheduler_type: linear
   logging_strategy: steps
   logging_first_step: true
-  logging_steps: 1
+  logging_steps: 10
   save_strategy: steps
-  save_steps: 100
+  save_steps: 10
   seed: 42
   data_seed: 42
   metric_for_best_model: dice
@@ -54,14 +54,15 @@ trainer_args:
   ignore_data_skip: false
   max_steps: 2000
   report_to: wandb
-  per_device_train_batch_size: 1
-  per_device_eval_batch_size: 1
+  per_device_train_batch_size: 16
+  per_device_eval_batch_size: 16
+  gradient_accumulation_steps: 5
   label_names:
     - target
 
 wandb_init:
   project: kvasir_seg
-  name: exp1
+  name: unet_plus_plus_baseline
 
 compute_metrics:
   thresholds:
