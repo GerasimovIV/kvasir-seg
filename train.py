@@ -38,7 +38,7 @@ def train_setup(train_config_path: Union[str, Path] = r"./train_config.yaml"):
     trainer_args = TrainingArguments(**trainer_args_config)
 
     wandb_init_params = train_config["wandb_init"]
-    # wandb.init(**wandb_init_params)
+    wandb.init(**wandb_init_params)
 
     sheduler = get_linear_schedule_with_warmup(
         optimizer=optimizer,
