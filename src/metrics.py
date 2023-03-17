@@ -23,8 +23,8 @@ class ComputeMetrics(object):
         assert "compute_metrics" in config, f"wrong resource {resource} construction"
 
         self.thresholds = config["compute_metrics"]["thresholds"]
-        self.dice = Dice(average="micro")
-        self.iou = JaccardIndex(task="multiclass", num_classes=2, average="micro")
+        self.dice = Dice(average="macro")
+        self.iou = JaccardIndex(task="multiclass", num_classes=2, average="macro")
 
     def compute_group_area_by_relarea(self, label: float) -> int:
         for i, interval in enumerate(self.thresholds):
