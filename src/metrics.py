@@ -7,7 +7,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 import yaml
 from torch import Tensor
-from torchmetrics import Dice
+from torchmetrics import Dice, JaccardIndex
 from transformers import EvalPrediction
 
 
@@ -24,6 +24,7 @@ class ComputeMetrics(object):
 
         self.thresholds = config["compute_metrics"]["thresholds"]
         self.dice = Dice(average="micro")
+        self.iou = JaccardIndex(num_classes=2)
 
     def compute_group_area_by_relarea(self, label: float) -> int:
         for i, interval in enumerate(self.thresholds):
@@ -47,7 +48,7 @@ class ComputeMetrics(object):
         predictions, labels = eval_pred
         b, _, _, _ = predictions.shape
 
-        area_groups = {i: {"dice": []} for i in range(len(self.thresholds))}
+        area_groups = {i: {"dice": [], "iou": []} for i in range(len(self.thresholds))}
 
         for i in range(b):
             pred = predictions[i : i + 1]
@@ -56,14 +57,21 @@ class ComputeMetrics(object):
             area_groups[group_area]["dice"].append(
                 self.dice(Tensor(pred).float(), Tensor(label).long())
             )
+            area_groups[group_area]["iou"].append(
+                self.iou(Tensor(pred).float(), Tensor(label).long())
+            )
 
         metrics_result = {}
         dice_all = []
+        iou_all = []
 
         for gr in area_groups:
             dice_all += area_groups[gr]["dice"]
+            iou_all += area_groups[gr]["iou"]
             metrics_result[f"dice_group_{gr}"] = np.mean(area_groups[gr]["dice"])
+            metrics_result[f"iou_group_{gr}"] = np.mean(area_groups[gr]["iou"])
 
         metrics_result["dice"] = np.mean(dice_all)
+        metrics_result["iou"] = np.mean(iou_all)
 
         return metrics_result
