@@ -24,7 +24,7 @@ class ComputeMetrics(object):
 
         self.thresholds = config["compute_metrics"]["thresholds"]
         self.dice = Dice(average="micro")
-        self.iou = JaccardIndex(num_classes=2)
+        self.iou = JaccardIndex(task="binary", num_classes=2, average="micro")
 
     def compute_group_area_by_relarea(self, label: float) -> int:
         for i, interval in enumerate(self.thresholds):
