@@ -1,0 +1,7 @@
+always:
+  Resize:
+    height: 512
+    interpolation: 1
+    p: 1.0
+    width: 512
+pick_randomly:

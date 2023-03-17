@@ -45,11 +45,19 @@ class LossCompose(nn.Module):
         self.losses = losses
         self.weights = weights
 
+    def to(self, device):
+        # print('HERE')
+        for loss in self.losses:
+            loss.to(device)
+
     def forward(self, input: torch.Tensor, target: torch.Tensor):
         device = input.device
-        loss_sum = torch.tensor(0.0, requires_grad=True, device=device)
+        loss_sum = 0.0  # torch.tensor(0.0, requires_grad=True, device=device)
 
         for w, loss_f in zip(self.weights, self.losses):
+            # print(loss_f.__class__.__name__, w, input.device, target.device)
+            # print(input.shape, target.shape)
+            # s =
             loss_sum = loss_sum + w * loss_f(input, target)
 
         return loss_sum
@@ -76,11 +84,12 @@ def load_loss(resource: Union[Path, str, Dict[str, Any]]) -> LossCompose:
         name = list(loss_config["losses"][i].keys())[0]
         params = loss_config["losses"][i].get(name)
         params = {} if params is None else params
+
         for k in params:
             if isinstance(params[k], List):
                 params[k] = Tensor(params[k])
-        loss = losses_funcs[name](**params)
 
+        loss = losses_funcs[name](**params)
         losses_list.append(loss)
 
     weights = loss_config["weights"]

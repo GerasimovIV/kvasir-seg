@@ -111,12 +111,14 @@ class Augmentator(object):
         self, transforms_config: Union[Dict[str, Any], Union[str, Path]]
     ) -> None:
 
-        self.transforms = []
+        # self.transforms = []
         # print(blue_bold("[Augmentator]:"), "initialization")
         if isinstance(transforms_config, str) or isinstance(transforms_config, Path):
             transforms_config = Path(transforms_config)
             with open(f"{transforms_config}") as file:
                 transforms_config = yaml.safe_load(file)
+
+        # print(transforms_config)
 
         self.transforms_always = []
         for name, params in transforms_config["always"].items():
@@ -132,23 +134,27 @@ class Augmentator(object):
                 )
 
         self.transforms_pick_randomly = []
-        for name, params in transforms_config["pick_randomly"].items():
-            if name in augmentation_funcs:
-                # print("\t" + blue_bold(name))
-                # for k, v in params.items():
-                #     print(f"\t\t{k}: {v}")
-                self.transforms_pick_randomly.append(augmentation_funcs[name](**params))
+        if transforms_config["pick_randomly"] is not None:
+            for name, params in transforms_config["pick_randomly"].items():
+                if name in augmentation_funcs:
+                    # print("\t" + blue_bold(name))
+                    # for k, v in params.items():
+                    #     print(f"\t\t{k}: {v}")
+                    self.transforms_pick_randomly.append(
+                        augmentation_funcs[name](**params)
+                    )
 
-            else:
-                print(
-                    red_bold("Warning!"), f"the augmentation with {name} was not found"
-                )
+                else:
+                    print(
+                        red_bold("Warning!"),
+                        f"the augmentation with {name} was not found",
+                    )
 
         self.len_transforms = len(self.transforms_pick_randomly)
 
     def __call__(self) -> torch.nn.modules.module.Module:
         if self.len_transforms == 0:
-            return A.Compose([])
+            return A.Compose(self.transforms_always)
 
         k = np.random.randint(low=1, high=self.len_transforms + 1)
         list_seq = np.random.choice(

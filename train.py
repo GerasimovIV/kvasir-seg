@@ -3,11 +3,13 @@ from typing import Optional, Sequence, Union
 
 import yaml
 from torch import nn
+from torch.utils.data import Subset
 from transformers import Trainer, TrainingArguments, get_linear_schedule_with_warmup
 
 import wandb
-from data_utils.dataset import load_datasets
+from src.data_utils.dataset import load_datasets
 from src.losses import load_loss
+from src.metrics import ComputeMetrics
 from src.models import load_model
 from src.optimizers import load_optimizer
 
@@ -26,9 +28,15 @@ def train_setup(train_config_path: Union[str, Path] = r"./train_config.yaml"):
     with open(train_config_path) as file:
         train_config = yaml.safe_load(file)
 
-    model = load_model(train_config)
     train_dataset, test_dataset = load_datasets(train_config)
+
+    # train_dataset = Subset(train_dataset, [0, 1, 2, 4])
+    # test_dataset = Subset(test_dataset, [9, 8, 7, 6, 5])
+
+    model = load_model(train_config)
     optimizer = load_optimizer(resource=train_config, model=model)
+    compute_metrics = ComputeMetrics(train_config)
+
     trainer_args_config = train_config["trainer_args"]
     trainer_args = TrainingArguments(**trainer_args_config)
 
@@ -47,6 +55,7 @@ def train_setup(train_config_path: Union[str, Path] = r"./train_config.yaml"):
         train_dataset=train_dataset,
         eval_dataset=test_dataset,
         optimizers=(optimizer, sheduler),
+        compute_metrics=compute_metrics,
     )
 
     return trainer

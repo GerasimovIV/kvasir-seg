@@ -36,6 +36,11 @@ class UpDownSampler(object):
 
 
 class WrappedSegformerForSemanticSegmentation(SegformerForSemanticSegmentation):
+    def to(self, device):
+        # print('XCFGHHJKLML<')
+        super().to(device)
+        self.loss.to(device)
+
     def add_loss_function(self, loss: nn.Module) -> None:
         self.loss = loss
 
@@ -54,6 +59,7 @@ class WrappedSegformerForSemanticSegmentation(SegformerForSemanticSegmentation):
         assert (
             logits.shape[-2:] == target.shape[-2:]
         ), "Something wrong in UpDownSampler"
+
         loss_result = self.loss(input=logits, target=target)
         return dict(logits=logits, loss=loss_result)
 
@@ -88,6 +94,7 @@ def loadSegformerForSemanticSegmentation(
     # model = WrappedSegformerForSemanticSegmentation(config, loss)
     model = WrappedSegformerForSemanticSegmentation.from_pretrained(pre_trained_name)
     model.add_loss_function(loss)
+    # model = WrappedSegformerForSemanticSegmentation(pre_trained_name, loss)
     config = model.config
     model.decode_head.classifier = nn.Conv2d(
         config.decoder_hidden_size, 2, kernel_size=1

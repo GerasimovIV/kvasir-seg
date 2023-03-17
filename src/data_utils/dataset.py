@@ -7,11 +7,13 @@ import numpy as np
 import torch
 import yaml
 from PIL import Image
+from sklearn.model_selection import train_test_split
 from termcolor import colored
 from torch.utils.data import Dataset, random_split
 from torchvision.transforms import ToTensor
 from tqdm import tqdm
 
+from ..metrics import ComputeMetrics
 from .utils import Augmentator
 
 
@@ -101,8 +103,14 @@ class KvasirDatasetBase(Dataset):
             print(f"Warning! {self.bboxes_file} doesn't consist of bbox for {name_key}")
 
         # prepare augmentations
+        # print(augment_conf)
         self.augmentator = Augmentator(augment_conf)
         self.to_tensor = ToTensor()
+
+    def set_up_augmentator(
+        self, augment_conf: Union[Dict[str, Any], Union[str, Path]] = {}
+    ) -> None:
+        self.augmentator = Augmentator(augment_conf)
 
     def __getitem__(
         self, idx: int, return_bboxes: bool = True
@@ -150,6 +158,13 @@ class KvasirDatasetBase(Dataset):
                 )
             result["bboxes"] = normalized_bboxes
 
+            object_area = target_mask_tensor.sum()
+            image_area = np.product(target_mask_tensor.shape[-2:])
+            relative_area = object_area / image_area
+
+            result["relative_area"] = relative_area
+            result["name"] = self.data_names[idx]
+
         return result
 
     def __len__(self) -> int:
@@ -157,6 +172,16 @@ class KvasirDatasetBase(Dataset):
 
 
 class KvasirDataset(KvasirDatasetBase):
+    def __init__(self, names: Optional[List[str]] = None, *args, **kwargs) -> None:
+        super().__init__(*args, **kwargs)
+        if names is not None:
+            self.data_names = names
+            self.data_names.sort()
+            names_current = list(self.data_images.keys())
+            for k in names_current:
+                if k not in self.data_names:
+                    self.data_images.pop(k)
+
     def __getitem__(self, idx) -> Dict["str", Union[torch.Tensor, List[torch.Tensor]]]:
         result = super().__getitem__(idx, return_bboxes=False)
         return result
@@ -181,13 +206,48 @@ def load_datasets(
         assert "data_config" in config, f"wrong resource {resource} construction"
 
     path_to_dataset = config["data_config"]["path_to_dataset"]
-    augment_config_path = config["data_config"]["augment_config"]
+    augment_config_path_train = config["data_config"]["augment_config"]["train"]
+    augment_config_path_test = config["data_config"]["augment_config"]["test"]
     seed = config["data_config"]["train_test_split"]["seed"]
     lens = config["data_config"]["train_test_split"]["lens"]
 
-    dataset = KvasirDataset(root_dir=path_to_dataset, augment_conf=augment_config_path)
+    # print(augment_config_path_train)
+    dataset = KvasirDatasetBase(
+        root_dir=path_to_dataset, augment_conf=augment_config_path_train
+    )
 
-    split_generator = torch.Generator().manual_seed(seed)
-    dataset_train, dataset_test = random_split(dataset, lens, generator=split_generator)
+    compute_metrics = ComputeMetrics(config)
+    name_group = [
+        [
+            item["name"],
+            compute_metrics.compute_group_area_by_relarea(item["relative_area"].item()),
+        ]
+        for item in dataset
+    ]
+
+    X = [n[0] for n in name_group]
+    y = [n[1] for n in name_group]
+    # print(y)
+    test_size = lens[1] / (sum(lens))
+    train_names, test_names, train_y, test_y = train_test_split(
+        X, y, test_size=test_size, random_state=seed, stratify=y
+    )
+    # print(test_y)
+    # split_generator = torch.Generator().manual_seed(seed)
+    # train_names, test_names = random_split(dataset.data_names, lens, generator=split_generator)
+
+    # train_names = [n for n in train_names]
+    # test_names = [n for n in test_names]
+
+    dataset_train = KvasirDataset(
+        names=train_names,
+        root_dir=path_to_dataset,
+        augment_conf=augment_config_path_train,
+    )
+    dataset_test = KvasirDataset(
+        names=test_names,
+        root_dir=path_to_dataset,
+        augment_conf=augment_config_path_test,
+    )
 
     return dataset_train, dataset_test
