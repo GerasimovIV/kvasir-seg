@@ -56,3 +56,8 @@ def train_setup(train_config_path: Union[str, Path] = r"./train_config.yaml"):
     )
 
     return trainer
+
+
+if __name__ == "__main__":
+    trainer = train_setup(r"./train_config.yaml")
+    trainer.train()
