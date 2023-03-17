@@ -9,7 +9,7 @@ import yaml
 from PIL import Image
 from sklearn.model_selection import train_test_split
 from termcolor import colored
-from torch.utils.data import Dataset, random_split
+from torch.utils.data import Dataset
 from torchvision.transforms import ToTensor
 from tqdm import tqdm
 
@@ -60,9 +60,7 @@ class KvasirDatasetBase(Dataset):
                 image_raw = Image.open(name)
                 self.data_images[name_key] = {"pil_image_raw": image_raw}
             except Exception:
-                print(
-                    f"{red_bold('error during reading image (this will be skipped):')}: {name}"
-                )
+                print(f"{red_bold('error during reading image:')}: {name}")
 
         for name in tqdm(glob(f"{self.masks_dir}/*.{self.mask_format}")):
             try:
@@ -80,9 +78,7 @@ class KvasirDatasetBase(Dataset):
                 ), f"the mask and image size should be the same, name: {name_key}"
 
             except Exception:
-                print(
-                    f"{red_bold('error during reading image (this will be skipped):')}: {name}"
-                )
+                print(f"{red_bold('error during reading image:')}: {name}")
 
         self.data_names = list(self.data_images.keys())
         self.data_names.sort()
@@ -103,7 +99,7 @@ class KvasirDatasetBase(Dataset):
             print(f"Warning! {self.bboxes_file} doesn't consist of bbox for {name_key}")
 
         # prepare augmentations
-        # print(augment_conf)
+
         self.augmentator = Augmentator(augment_conf)
         self.to_tensor = ToTensor()
 
@@ -125,7 +121,6 @@ class KvasirDatasetBase(Dataset):
 
         augmentations = self.augmentator()
 
-        # print(input_tensor.size, target_mask_tensor.size)
         transformed = augmentations(image=input_tensor, mask=target_mask_tensor)
 
         input_tensor = transformed["image"]
@@ -211,7 +206,6 @@ def load_datasets(
     seed = config["data_config"]["train_test_split"]["seed"]
     lens = config["data_config"]["train_test_split"]["lens"]
 
-    # print(augment_config_path_train)
     dataset = KvasirDatasetBase(
         root_dir=path_to_dataset, augment_conf=augment_config_path_train
     )
@@ -227,17 +221,11 @@ def load_datasets(
 
     X = [n[0] for n in name_group]
     y = [n[1] for n in name_group]
-    # print(y)
+
     test_size = lens[1] / (sum(lens))
     train_names, test_names, train_y, test_y = train_test_split(
         X, y, test_size=test_size, random_state=seed, stratify=y
     )
-    # print(test_y)
-    # split_generator = torch.Generator().manual_seed(seed)
-    # train_names, test_names = random_split(dataset.data_names, lens, generator=split_generator)
-
-    # train_names = [n for n in train_names]
-    # test_names = [n for n in test_names]
 
     dataset_train = KvasirDataset(
         names=train_names,

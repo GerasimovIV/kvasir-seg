@@ -30,9 +30,6 @@ def train_setup(train_config_path: Union[str, Path] = r"./train_config.yaml"):
 
     train_dataset, test_dataset = load_datasets(train_config)
 
-    # train_dataset = Subset(train_dataset, [0, 1, 2, 4])
-    # test_dataset = Subset(test_dataset, [9, 8, 7, 6, 5])
-
     model = load_model(train_config)
     optimizer = load_optimizer(resource=train_config, model=model)
     compute_metrics = ComputeMetrics(train_config)

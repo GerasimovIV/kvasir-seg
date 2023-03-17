@@ -14,7 +14,8 @@ from tqdm import tqdm
 
 
 def plot_mask_over_image(
-    image: Union[torch.Tensor, Image.Image], mask: Union[torch.Tensor, Image.Image]
+    image: Union[torch.Tensor, Image.Image],
+    mask: Union[torch.Tensor, Image.Image],
 ) -> None:
     to_tensor = ToTensor()
 
@@ -59,14 +60,8 @@ def _count_without_black(image: torch.Tensor) -> int:
     return mask.sum()
 
 
-def _count_background(image: torch.Tensor, mask: torch.Tensor) -> int:
-    return _count_without_black(image) - _count_target(mask)
-
-
 def collect_statistic(dataset: Dataset) -> Dict[str, int]:
     object_areas = []
-    # background_areas = []
-    # black_regions_areas = []
     objects_counts = []
 
     for data_ in tqdm(dataset, desc="processing dataset"):
@@ -111,35 +106,27 @@ class Augmentator(object):
         self, transforms_config: Union[Dict[str, Any], Union[str, Path]]
     ) -> None:
 
-        # self.transforms = []
-        # print(blue_bold("[Augmentator]:"), "initialization")
         if isinstance(transforms_config, str) or isinstance(transforms_config, Path):
             transforms_config = Path(transforms_config)
             with open(f"{transforms_config}") as file:
                 transforms_config = yaml.safe_load(file)
 
-        # print(transforms_config)
-
         self.transforms_always = []
         for name, params in transforms_config["always"].items():
             if name in augmentation_funcs:
-                # print("\t" + blue_bold(name))
-                # for k, v in params.items():
-                #     print(f"\t\t{k}: {v}")
+
                 self.transforms_always.append(augmentation_funcs[name](**params))
 
             else:
                 print(
-                    red_bold("Warning!"), f"the augmentation with {name} was not found"
+                    red_bold("Warning!"),
+                    f"the augmentation with {name} was not found",
                 )
 
         self.transforms_pick_randomly = []
         if transforms_config["pick_randomly"] is not None:
             for name, params in transforms_config["pick_randomly"].items():
                 if name in augmentation_funcs:
-                    # print("\t" + blue_bold(name))
-                    # for k, v in params.items():
-                    #     print(f"\t\t{k}: {v}")
                     self.transforms_pick_randomly.append(
                         augmentation_funcs[name](**params)
                     )

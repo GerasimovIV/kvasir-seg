@@ -36,11 +36,10 @@ class ComputeMetrics(object):
         image_area = np.product(label.shape[-2:])
 
         relative_area = object_area / image_area
-        # print(relative_area, label.max(), label.min())
 
         for i, interval in enumerate(self.thresholds):
             if interval[0] <= relative_area < interval[1]:
-                # print(relative_area, i, end=' -> ')
+
                 return i
         return i
 
@@ -53,9 +52,7 @@ class ComputeMetrics(object):
         for i in range(b):
             pred = predictions[i : i + 1]
             label = labels[i : i + 1]
-            # print(label.shape, type(label))
             group_area = self.compute_group_area_by_target(label)
-            # print(group_area, 'ksdc,osdc')
             area_groups[group_area]["dice"].append(
                 self.dice(Tensor(pred).float(), Tensor(label).long())
             )
