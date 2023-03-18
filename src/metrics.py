@@ -23,8 +23,8 @@ class ComputeMetrics(object):
         assert "compute_metrics" in config, f"wrong resource {resource} construction"
 
         self.thresholds = config["compute_metrics"]["thresholds"]
-        self.dice = Dice(average="macro", num_classes=2)
-        self.iou = JaccardIndex(task="multiclass", num_classes=2, average="macro")
+        self.dice = Dice(num_classes=1)
+        self.iou = JaccardIndex(task="binary")
 
     def compute_group_area_by_relarea(self, label: float) -> int:
         for i, interval in enumerate(self.thresholds):
@@ -51,15 +51,19 @@ class ComputeMetrics(object):
         area_groups = {i: {"dice": [], "iou": []} for i in range(len(self.thresholds))}
 
         for i in range(b):
-            pred = predictions[i : i + 1]
-            label = labels[i : i + 1]
+            pred = Tensor(predictions[i : i + 1]).float()
+            label = Tensor(labels[i : i + 1]).long()
+
+            pred = F.softmax(pred, dim=1)
+
             group_area = self.compute_group_area_by_target(label)
+
             area_groups[group_area]["dice"].append(
-                self.dice(Tensor(pred).float(), Tensor(label).long())
+                self.dice(pred[:, 1].flatten(), label.flatten())
             )
-            area_groups[group_area]["iou"].append(
-                self.iou(Tensor(pred).float(), Tensor(label).long())
-            )
+
+            pred = pred.argmax(dim=1)
+            area_groups[group_area]["iou"].append(self.iou(pred, label))
 
         metrics_result = {}
         dice_all = []
