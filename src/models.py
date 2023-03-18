@@ -2,6 +2,7 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional, Sequence, Tuple, Union
 
 import segmentation_models_pytorch as smp
+import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import yaml
@@ -54,7 +55,7 @@ class WrappedSegformerForSemanticSegmentation(SegformerForSemanticSegmentation):
         self.sampler = UpDownSampler(resource)
 
     def forward(self, input: Tensor, target: Tensor) -> Dict[str, Tensor]:
-        logits = self.predict(input).logits
+        logits = self.predict(input)
         logits, target = self.sampler(input=logits, target=target)
         assert (
             logits.shape[-2:] == target.shape[-2:]
@@ -64,7 +65,7 @@ class WrappedSegformerForSemanticSegmentation(SegformerForSemanticSegmentation):
         return dict(logits=logits, loss=loss_result)
 
     def predict(slef, input: Tensor) -> Tensor:
-        return super().forward(input)
+        return super().forward(input).logits
 
 
 class WrappedUnetPlusPlus(smp.UnetPlusPlus):
@@ -125,7 +126,7 @@ def loadUnetPlusPlus(
     loss = load_loss(resource)
 
     model = WrappedUnetPlusPlus(
-        encoder_name="resnet34",
+        encoder_name=encoder_name,
         encoder_weights=pre_trained_name,
         in_channels=3,
         classes=2,
@@ -158,3 +159,15 @@ def load_model(resource: Union[Path, str, Dict[str, Any]]):
     model = models_load_functions[name](resource, **args)
 
     return model
+
+
+def load_weights_from_checkpoint(path: Union[str, Path], model: nn.Module) -> None:
+    path = Path(path)
+    if path.is_file():
+        checkpoint_path = path
+
+    else:
+        checkpoint_path = path / "pytorch_model.bin"
+    checkpoint = torch.load(checkpoint_path, map_location="cpu")
+    res = model.load_state_dict(checkpoint)
+    print(f"{model.__class__.__name__}: {res}")

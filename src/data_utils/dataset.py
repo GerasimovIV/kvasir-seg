@@ -182,6 +182,25 @@ class KvasirDataset(KvasirDatasetBase):
         return result
 
 
+def load_dataset(resource: Union[Path, str, Dict[str, Any]]) -> KvasirDataset:
+    config = resource
+
+    if isinstance(resource, Path) or isinstance(resource, str):
+        resource = Path(resource)
+
+        with open(resource, "r") as file:
+            config = yaml.safe_load(file)
+
+        assert "data_config" in config, f"wrong resource {resource} construction"
+
+    path_to_dataset = config["data_config"]["path_to_dataset"]
+    augment_config_path = config["data_config"]["augment_config"]
+
+    dataset = KvasirDataset(root_dir=path_to_dataset, augment_conf=augment_config_path)
+
+    return dataset
+
+
 def load_datasets(
     resource: Union[Path, str, Dict[str, Any]]
 ) -> Sequence[KvasirDataset]:

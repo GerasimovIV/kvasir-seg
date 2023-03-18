@@ -1,0 +1,42 @@
+model:
+  name: UnetPlusPlus
+  downsample_target: false
+  load_args:
+    pre_trained_name: imagenet
+    encoder_name: resnet34
+
+checkpoint: ./expirements/unet_plus_plus_baseline/checkpoint-1000
+
+data_config:
+  path_to_dataset: ./dataset/sessile-main-Kvasir-SEG/
+  augment_config: ./augmentation_config_test.yaml
+
+loss_config:
+  losses:
+    - CrossEntropy:
+        weight:
+          - 0.5
+          - 0.5
+        reduction: mean
+    - DiceLoss:
+  weights:
+    - 0.5
+    - 0.5
+
+compute_metrics:
+  thresholds:
+    -
+      - 0.
+      - 0.1
+    -
+      - 0.1
+      - 0.2
+    -
+      - 0.2
+      - 0.3
+    -
+      - 0.3
+      - 0.5
+    -
+      - 0.5
+      - 1.0
