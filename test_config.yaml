@@ -6,7 +6,7 @@ model:
     encoder_name: resnet34
 
 checkpoint: ./expirements/unet_plus_plus_baseline/checkpoint-1000
-
+device: cuda
 data_config:
   path_to_dataset: ./dataset/sessile-main-Kvasir-SEG/
   augment_config: ./augmentation_config_test.yaml
