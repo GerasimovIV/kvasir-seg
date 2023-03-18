@@ -42,7 +42,7 @@ def train_setup(train_config_path: Union[str, Path] = r"./train_config.yaml"):
 
     sheduler = get_linear_schedule_with_warmup(
         optimizer=optimizer,
-        num_warmup_steps=200,
+        num_warmup_steps=80,
         num_training_steps=trainer_args.max_steps,
     )
 

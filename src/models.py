@@ -120,6 +120,7 @@ def loadSegformerForSemanticSegmentation(
 def loadUnetPlusPlus(
     resource: Union[Path, str, Dict[str, Any]],
     pre_trained_name: str = "imagenet",
+    encoder_name: str = "resnet34",
 ) -> nn.Module:
     loss = load_loss(resource)
 
