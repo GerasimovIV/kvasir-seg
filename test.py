@@ -3,6 +3,7 @@ from typing import Any, Dict, Union
 
 import torch
 import yaml
+from tabulate import tabulate
 from tqdm import tqdm
 
 from src.data_utils.dataset import load_dataset
@@ -48,3 +49,9 @@ def test_model(
     if return_pred:
         return metrics, test_preds, test_labels
     return metrics
+
+
+if __name__ == "__main__":
+    metrics = test_model("./test_config.yaml")
+    table = [[k, f"{v:.3}"] for k, v in metrics.items()]
+    print(tabulate(table))
