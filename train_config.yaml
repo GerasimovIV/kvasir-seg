@@ -52,6 +52,7 @@ trainer_args:
   data_seed: 42
   metric_for_best_model: dice
   greater_is_better: true
+  save_total_limit: 2
   ignore_data_skip: false
   max_steps: 1000
   report_to: wandb
