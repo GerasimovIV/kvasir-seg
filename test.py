@@ -9,7 +9,6 @@ from tqdm import tqdm
 from src.data_utils.dataset import load_dataset
 from src.metrics import ComputeMetrics
 from src.models import load_model, load_weights_from_checkpoint
-from train import CustomTrainer
 
 
 def count_parameters(model):
@@ -81,12 +80,59 @@ def test_models(
         test_config["checkpoint"] = model_params.get("checkpoint")
 
         metrics = test_model(test_config)
+        metrics["model_name"] = model_params.get("name_display")
         result_metrics.append(metrics)
 
     return result_metrics
 
 
 if __name__ == "__main__":
-    metrics = test_model("./test_config.yaml")
-    table = [[k, f"{v:.3}"] for k, v in metrics.items()]
-    print(tabulate(table))
+
+    models = [
+        {
+            "model": {
+                "name": "UnetPlusPlus",
+                "downsample_target": False,
+                "load_args": {
+                    "pre_trained_name": "imagenet",
+                    "encoder_name": "resnet34",
+                },
+            },
+            "checkpoint": "./expirements/unet_plus_plus_baseline/checkpoint-1000",
+            "name_display": "CE+Dice, Unet++ (resnet34)",
+        },
+        {
+            "model": {
+                "name": "UnetPlusPlus",
+                "downsample_target": False,
+                "load_args": {
+                    "pre_trained_name": "imagenet",
+                    "encoder_name": "resnet101",
+                },
+            },
+            "checkpoint": "./expirements/unet_plus_plus_resnet101/checkpoint-1000",
+            "name_display": "CE+Dice, Unet++ (resnet101)",
+        },
+        {
+            "model": {
+                "name": "SegformerForSemanticSegmentation",
+                "downsample_target": False,
+                "load_args": {"pre_trained_name": "nvidia/mit-b0"},
+            },
+            "checkpoint": "./expirements/segformer_mit-b0/checkpoint-1000",
+            "name_display": "CE+Dice, Segformer (nvidia/mit-b0)",
+        },
+    ]
+
+    metrics = test_models(models=models, resource="./test_config.yaml")
+
+    head_metrics = list(metrics[0]["metrics"].keys())
+    head_metrics.sort()
+    headers = ["model"] + head_metrics
+
+    table = [
+        [metrics[i]["model_name"] + f' ({metrics[i]["params"]/1e+6:.3}M)']
+        + [f"{metrics[i]['metrics'][k]:.3}" for k in headers[1:]]
+        for i in range(len(metrics))
+    ]
+    print(tabulate(table, headers=headers, tablefmt="grid"))
