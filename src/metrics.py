@@ -57,7 +57,6 @@ class ComputeMetrics(object):
             pred = F.softmax(pred, dim=1)
 
             group_area = self.compute_group_area_by_target(label)
-
             area_groups[group_area]["dice"].append(
                 self.dice(pred[:, 1].flatten(), label.flatten())
             )

@@ -36,8 +36,12 @@ class UpDownSampler(object):
 
         return input, target
 
+    def resize(self, input: Tensor, size: Sequence[int]):
+        input = F.interpolate(input, size=size, mode="nearest")
+        return input
 
-class WrappedSegformerForSemanticSegmentation(SegformerForSemanticSegmentation):
+
+class ModelWrapper(nn.Module):
     def to(self, device):
         super().to(device)
         self.loss.to(device)
@@ -54,6 +58,15 @@ class WrappedSegformerForSemanticSegmentation(SegformerForSemanticSegmentation):
         """
         self.sampler = UpDownSampler(resource)
 
+    def predict_and_resize(self, input: Tensor, size: Sequence[int]) -> Tensor:
+        pred = self.predict(input)
+        pred = self.sampler.resize(pred, size)
+        return pred
+
+
+class WrappedSegformerForSemanticSegmentation(
+    SegformerForSemanticSegmentation, ModelWrapper
+):
     def forward(self, input: Tensor, target: Tensor) -> Dict[str, Tensor]:
         logits = self.predict(input)
         logits, target = self.sampler(input=logits, target=target)
@@ -64,27 +77,11 @@ class WrappedSegformerForSemanticSegmentation(SegformerForSemanticSegmentation):
         loss_result = self.loss(input=logits, target=target)
         return dict(logits=logits, loss=loss_result)
 
-    def predict(slef, input: Tensor) -> Tensor:
+    def predict(self, input: Tensor) -> Tensor:
         return super().forward(input).logits
 
 
-class WrappedUnetPlusPlus(smp.UnetPlusPlus):
-    def to(self, device):
-        super().to(device)
-        self.loss.to(device)
-
-    def add_loss_function(self, loss: nn.Module) -> None:
-        self.loss = loss
-
-    def set_up_type_upsample(self, resource: Union[Path, str, Dict[str, Any]]):
-        """
-        if downsample_target == True,
-        then target will be downsamplet to size of model
-        and loss will be computed with smallest tensors
-        and vise wersa
-        """
-        self.sampler = UpDownSampler(resource)
-
+class WrappedUnetPlusPlus(smp.UnetPlusPlus, ModelWrapper):
     def forward(self, input: Tensor, target: Tensor) -> Dict[str, Tensor]:
         logits = self.predict(input)
         logits, target = self.sampler(input=logits, target=target)

@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Any, Dict, Union
+from typing import Any, Dict, Sequence, Union
 
 import torch
 import yaml
@@ -12,9 +12,13 @@ from src.models import load_model, load_weights_from_checkpoint
 from train import CustomTrainer
 
 
+def count_parameters(model):
+    return sum(p.numel() for p in model.parameters())
+
+
 def test_model(
     resource: Union[str, Path, Dict[str, Any]], return_pred: bool = False
-) -> Dict[str, float]:
+) -> Dict[str, Any]:
     test_config = resource
     if isinstance(resource, str) or isinstance(resource, Path):
         resource = Path(resource)
@@ -37,7 +41,7 @@ def test_model(
             input = data["input"].unsqueeze(0).to(device)
             target = data["target"].unsqueeze(0).to(device)
 
-            logits = model.predict(input)
+            logits = model.predict_and_resize(input, target.shape[-2:])
             test_preds.append(logits.to("cpu"))
             test_labels.append(target.to("cpu"))
 
@@ -45,10 +49,41 @@ def test_model(
     test_labels = torch.cat(test_labels, dim=0)
 
     metrics = compute_metrics([test_preds, test_labels])
+    model_params_count = count_parameters(model)
+
+    metrics = {
+        "model_name": model.__class__.__name__,
+        "params": model_params_count,
+        "metrics": metrics,
+    }
 
     if return_pred:
-        return metrics, test_preds, test_labels
+        metrics["test_preds"] = test_preds
+        metrics["test_labels"] = test_labels
+
     return metrics
+
+
+def test_models(
+    models: Sequence[Dict], resource: Union[str, Path, Dict[str, Any]]
+) -> Dict:
+
+    test_config = resource
+    if isinstance(resource, str) or isinstance(resource, Path):
+        resource = Path(resource)
+        with open(resource, "r") as file:
+            test_config = yaml.safe_load(file)
+
+    result_metrics = []
+
+    for model_params in models:
+        test_config["model"] = model_params.get("model")
+        test_config["checkpoint"] = model_params.get("checkpoint")
+
+        metrics = test_model(test_config)
+        result_metrics.append(metrics)
+
+    return result_metrics
 
 
 if __name__ == "__main__":
