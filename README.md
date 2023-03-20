@@ -179,10 +179,7 @@ Download and extarct datasets
 ```sh
 make datasets
 ```
-Download and extract checkpoint
-```sh
-make checkpoints
-```
+
 now you are ready to use any scripts or notebook 🚀. For example in you may use [test notebook](https://github.com/GerasimovIV/kvasir-seg/blob/main/Testing.ipynb) or [script](https://github.com/GerasimovIV/kvasir-seg/blob/main/test.py) as below:
 
 ```sh
