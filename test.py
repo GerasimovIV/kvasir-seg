@@ -107,11 +107,35 @@ if __name__ == "__main__":
                 "downsample_target": False,
                 "load_args": {
                     "pre_trained_name": "imagenet",
+                    "encoder_name": "resnet34",
+                },
+            },
+            "checkpoint": "./expirements/UnetPlusPlus_resnet34_CE_Boundary/checkpoint-1000/",
+            "name_display": "CE+Boundary, Unet++ (resnet34)",
+        },
+        {
+            "model": {
+                "name": "UnetPlusPlus",
+                "downsample_target": False,
+                "load_args": {
+                    "pre_trained_name": "imagenet",
                     "encoder_name": "resnet101",
                 },
             },
             "checkpoint": "./expirements/unet_plus_plus_resnet101/checkpoint-1000",
             "name_display": "CE+Dice, Unet++ (resnet101)",
+        },
+        {
+            "model": {
+                "name": "UnetPlusPlus",
+                "downsample_target": False,
+                "load_args": {
+                    "pre_trained_name": "imagenet",
+                    "encoder_name": "resnet101",
+                },
+            },
+            "checkpoint": "./expirements/UnetPlusPlus_resnet101_CE_Boundary/checkpoint-1000/",
+            "name_display": "CE+Boundary, Unet++ (resnet101)",
         },
         {
             "model": {
@@ -121,6 +145,15 @@ if __name__ == "__main__":
             },
             "checkpoint": "./expirements/segformer_mit-b0/checkpoint-1000",
             "name_display": "CE+Dice, Segformer (nvidia/mit-b0)",
+        },
+        {
+            "model": {
+                "name": "SegformerForSemanticSegmentation",
+                "downsample_target": False,
+                "load_args": {"pre_trained_name": "nvidia/mit-b0"},
+            },
+            "checkpoint": "./expirements/SegformerForSemanticSegmentation_mit-b0_CE_Boundary/checkpoint-1000/",
+            "name_display": "CE+Boundary, Segformer (nvidia/mit-b0)",
         },
     ]
 
