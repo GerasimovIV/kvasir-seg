@@ -1,0 +1,2 @@
+expirements/* filter=lfs diff=lfs merge=lfs -text
+expirements/** filter=lfs diff=lfs merge=lfs -text

@@ -4,7 +4,6 @@ dataset/
 *.ipynb_checkpoints
 
 /wandb/*
-expirements/*
 
 .venv/
 .vscode/
