@@ -185,3 +185,12 @@ now you are ready to use any scripts or notebook 🚀. For example in you may us
 ```sh
 python test.py
 ```
+
+## Train
+For training you should fill fields in [train_config.yaml](https://github.com/GerasimovIV/kvasir-seg/blob/main/train_config.yaml) file and start training:
+
+```sh
+python train.py
+```
+
+You also can setup augmentations for eval and train datasets in [augmentation_config_test.yaml](https://github.com/GerasimovIV/kvasir-seg/blob/main/augmentation_config_test.yaml) and [augmentation_config_train.yaml](https://github.com/GerasimovIV/kvasir-seg/blob/main/augmentation_config_train.yaml) respectively.
